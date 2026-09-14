@@ -17,7 +17,7 @@ export default function App() {
         accessibilityLabel="Haftalık Plan uygulamasını başlat"
       />
       {started && (
-        <Text style={styles.started}>İlk planını oluşturmaya hazırsın!</Text>
+        <Text style={styles.started}>İlk planını oluşturmaya hazırsın! Hey Hey</Text>
       )}
       <StatusBar style="auto" />
     </View>
