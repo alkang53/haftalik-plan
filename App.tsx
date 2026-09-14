@@ -16,7 +16,9 @@ export default function App() {
         onPress={() => setStarted(true)}
         accessibilityLabel="Haftalık Plan uygulamasını başlat"
       />
-      {started && <Text style={styles.started}>Hazırsın!</Text>}
+      {started && (
+        <Text style={styles.started}>İlk planını oluşturmaya hazırsın!</Text>
+      )}
       <StatusBar style="auto" />
     </View>
   );
