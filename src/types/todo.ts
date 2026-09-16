@@ -18,6 +18,15 @@ export const TODO_TAG_LABELS: Record<TodoTag, string> = {
   other: 'Diğer',
 };
 
+export const TODO_TAG_ICONS: Record<TodoTag, string> = {
+  meeting: '🗓️',
+  work: '💼',
+  privateLife: '👨‍👩‍👧',
+  health: '❤️',
+  personal: '🎯',
+  other: '📌',
+};
+
 export const DEFAULT_TODO_TAG: TodoTag = 'other';
 
 export type Todo = {
