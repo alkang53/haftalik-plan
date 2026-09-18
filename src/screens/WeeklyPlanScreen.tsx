@@ -1,9 +1,11 @@
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DraggableTodoRow } from '../components/DraggableTodoRow';
+import { PrivacyInfo } from '../components/PrivacyInfo';
 import { TodoEditor } from '../components/TodoEditor';
 import { TodoForm } from '../components/TodoForm';
 import { loadTodos, moveTodo, updateTodo } from '../storage/todoStorage';
@@ -17,6 +19,8 @@ type Layout = { y: number; height: number };
 type DragPreview = { todoId: string; date: string; index: number };
 type TodoLayout = Layout & { date: string; localY: number };
 
+const PRIVACY_NOTICE_KEY = '@haftalik-plan/privacy-notice-seen';
+
 export function WeeklyPlanScreen() {
   const currentWeek = getWeek();
   const [selectedMonday, setSelectedMonday] = useState(currentWeek.monday);
@@ -28,6 +32,8 @@ export function WeeklyPlanScreen() {
   const [todoDate, setTodoDate] = useState<string | null>(null);
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const [dragPreview, setDragPreview] = useState<DragPreview | null>(null);
+  const [showPrivacyInfo, setShowPrivacyInfo] = useState(false);
+  const [showFirstUseNotice, setShowFirstUseNotice] = useState(false);
   const [loading, setLoading] = useState(true);
   const dayScrollRef = useRef<ScrollView | null>(null);
   const scrollWindowRef = useRef<View | null>(null);
@@ -54,6 +60,17 @@ export function WeeklyPlanScreen() {
   useEffect(() => {
     loadTodos().then(setTodos).finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    AsyncStorage.getItem(PRIVACY_NOTICE_KEY).then((seen) => {
+      if (!seen) setShowFirstUseNotice(true);
+    });
+  }, []);
+
+  const closeFirstUseNotice = async () => {
+    setShowFirstUseNotice(false);
+    await AsyncStorage.setItem(PRIVACY_NOTICE_KEY, 'true');
+  };
 
   const todosForDate = (date: string) => sortTodos(todos.filter((todo) => todo.date === date));
 
@@ -199,7 +216,12 @@ export function WeeklyPlanScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.planContent}>
-        <View style={styles.planTopBar}><Text style={styles.topBarLabel}>SEVEN</Text></View>
+        <View style={styles.planTopBar}>
+          <Text style={styles.topBarLabel}>SEVEN</Text>
+          <Pressable accessibilityLabel="Gizlilik ve ayarları aç" accessibilityRole="button" onPress={() => setShowPrivacyInfo(true)} style={({ pressed }) => [styles.settingsButton, pressed && styles.pressedButton]}>
+            <Text style={styles.settingsText}>Ayarlar</Text>
+          </Pressable>
+        </View>
         <View style={styles.planHeader}>
           <Text style={styles.planTitle}>{formatDate(firstDay)} - {formatDate(lastDay)}</Text>
           <View style={styles.navigation}>
@@ -300,6 +322,12 @@ export function WeeklyPlanScreen() {
       </Modal>
       <Modal animationType="slide" onRequestClose={() => setEditingTodo(null)} transparent visible={editingTodo !== null}>
         {editingTodo && <TodoEditor todo={editingTodo} onClose={() => setEditingTodo(null)} onDeleted={(id) => { setTodos((current) => current.filter((todo) => todo.id !== id)); setEditingTodo(null); }} onSaved={(todo) => { setTodos((current) => replaceTodo(current, todo)); setEditingTodo(null); }} />}
+      </Modal>
+      <Modal animationType="slide" onRequestClose={() => setShowPrivacyInfo(false)} transparent visible={showPrivacyInfo}>
+        <PrivacyInfo onClose={() => setShowPrivacyInfo(false)} />
+      </Modal>
+      <Modal animationType="fade" onRequestClose={closeFirstUseNotice} transparent visible={showFirstUseNotice}>
+        <PrivacyInfo firstUse onClose={closeFirstUseNotice} />
       </Modal>
       <StatusBar style="dark" />
     </SafeAreaView>
