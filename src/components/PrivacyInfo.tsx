@@ -13,7 +13,7 @@ export function PrivacyInfo({ firstUse = false, onClose }: Props) {
       <View style={styles.infoCard}>
         <View style={styles.modalHeader}>
           <View style={styles.infoTitleBlock}>
-            <Text style={styles.modalTitle}>{firstUse ? 'Hoşgeldin' : 'Gizlilik ve ayarlar'}</Text>
+            <Text style={styles.modalTitle}>{firstUse ? 'Hoşgeldin' : 'Gizlilik ve Ayarlar'}</Text>
           </View>
           {!firstUse && (
             <Pressable accessibilityLabel="Gizlilik ekranını kapat" accessibilityRole="button" onPress={onClose} style={styles.closeButton}>
@@ -27,7 +27,7 @@ export function PrivacyInfo({ firstUse = false, onClose }: Props) {
           <Text style={styles.infoSectionTitle}>Verilerin nerede?</Text>
           <Text style={styles.infoText}>Görevlerin yalnızca bu cihazdaki yerel depolama alanında saklanır. Hesap açman veya bir sunucuya bağlanman gerekmez.</Text>
           <Text style={styles.infoSectionTitle}>Verileri silme</Text>
-          <Text style={styles.infoText}>Görevleri uygulama içindeki silme işlemiyle tek tek kaldırabilirsin. Uygulamayı cihazından sildiğinde, yalnızca bu cihazda tutulan yerel görev verileri de silinir.</Text>
+          <Text style={styles.infoText}>Görevleri uygulama içindeki silme işlemiyle tek tek kaldırabilirsin. Uygulamayı cihazından sildiğinde, bu cihazda tutulan yerel görev verileri de silinir.</Text>
           <Text style={styles.infoSectionTitle}>Gelecekteki senkronizasyon</Text>
           <Text style={styles.infoText}>Takvim veya başka bir hizmetle senkronizasyon şu anda etkin değildir. İleride eklenirse yalnızca senin açık iznin ve bağlantınla çalışacaktır.</Text>
         </ScrollView>
