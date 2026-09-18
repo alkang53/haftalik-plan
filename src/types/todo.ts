@@ -37,6 +37,7 @@ export type Todo = {
   tag: TodoTag;
   completed: boolean;
   order: number;
+  manualOrder?: boolean;
 };
 
 export type NewTodo = Omit<Todo, 'id' | 'order'> & { order?: number };
