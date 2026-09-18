@@ -71,7 +71,8 @@ export function DraggableTodoRow({
       ]}
     >
       <Pressable
-        accessibilityLabel={`${todo.title} görevini düzenle`}
+         accessibilityLabel={`${todo.title} görevini düzenle`}
+         accessibilityHint="Düzenlemek için dokunun, taşımak için basılı tutup sürükleyin"
         accessibilityRole="button"
         onPress={onEdit}
         style={({ pressed }) => [styles.todoRow, todo.completed && styles.completedTodoRow, pressed && styles.pressedTodoRow]}
@@ -89,7 +90,7 @@ export function DraggableTodoRow({
           <Text style={styles.todoTagIcon}>{TODO_TAG_ICONS[todo.tag]}</Text>
         </Pressable>
         {todo.time && <Text style={[styles.todoTime, todo.completed && styles.completedText]}>{todo.time}</Text>}
-        <Text style={[styles.todoTitle, todo.completed && styles.completedText]}>{todo.title}</Text>
+         <Text numberOfLines={3} style={[styles.todoTitle, todo.completed && styles.completedText]}>{todo.title}</Text>
       </Pressable>
     </Animated.View>
   );

@@ -94,9 +94,9 @@ export function TodoForm({ initialDate, onClose, onCreated }: Props) {
           <DateTimePicker
             mode="date"
             onDismiss={() => setShowDatePicker(false)}
-            onValueChange={(_event, selected) => {
-              setShowDatePicker(false);
-              setDate(toDateKey(selected));
+             onValueChange={(_event, selected) => {
+               setShowDatePicker(false);
+               if (selected) setDate(toDateKey(selected));
             }}
             value={dateFromKey(date)}
           />
@@ -107,15 +107,15 @@ export function TodoForm({ initialDate, onClose, onCreated }: Props) {
           <Pressable accessibilityLabel={time ? `Saat ${formatTime(time)}` : 'Saat seç'} accessibilityRole="button" onPress={() => setShowTimePicker(true)} style={({ pressed }) => [styles.timeButton, pressed && styles.pressedButton]}>
             <Text style={styles.timeButtonText}>{time ? formatTime(time) : 'Saat seç'}</Text>
           </Pressable>
-          {time && <Pressable onPress={() => setTime(null)} style={styles.clearTimeButton}><Text style={styles.clearTimeText}>Temizle</Text></Pressable>}
+           {time && <Pressable accessibilityLabel="Seçilen saati temizle" accessibilityRole="button" onPress={() => setTime(null)} style={styles.clearTimeButton}><Text style={styles.clearTimeText}>Temizle</Text></Pressable>}
         </View>
         {showTimePicker && (
           <DateTimePicker
             mode="time"
             onDismiss={() => setShowTimePicker(false)}
-            onValueChange={(_event, selected) => {
-              setShowTimePicker(false);
-              setTime(selected);
+             onValueChange={(_event, selected) => {
+               setShowTimePicker(false);
+               if (selected) setTime(selected);
             }}
             value={time ?? new Date()}
           />
@@ -124,7 +124,7 @@ export function TodoForm({ initialDate, onClose, onCreated }: Props) {
         <Text style={styles.fieldLabel}>Etiket</Text>
         <View style={styles.tagList}>
           {TODO_TAGS.map((item) => (
-            <Pressable accessibilityRole="radio" accessibilityState={{ selected: tag === item }} key={item} onPress={() => setTag(item)} style={[styles.tagButton, tag === item && styles.selectedTagButton]}>
+             <Pressable accessibilityLabel={`${TODO_TAG_LABELS[item]} etiketini seç`} accessibilityRole="radio" accessibilityState={{ selected: tag === item }} key={item} onPress={() => setTag(item)} style={[styles.tagButton, tag === item && styles.selectedTagButton]}>
               <Text style={[styles.tagIcon, tag === item && styles.selectedTagText]}>{TODO_TAG_ICONS[item]}</Text>
               <Text style={[styles.tagText, tag === item && styles.selectedTagText]}>{TODO_TAG_LABELS[item]}</Text>
             </Pressable>
@@ -132,7 +132,7 @@ export function TodoForm({ initialDate, onClose, onCreated }: Props) {
         </View>
 
         {!!error && <Text style={styles.errorText}>{error}</Text>}
-        <Pressable accessibilityRole="button" disabled={saving} onPress={handleSubmit} style={({ pressed }) => [styles.submitButton, pressed && styles.submitPressed, saving && styles.disabledButton]}>
+        <Pressable accessibilityLabel="Görevi ekle" accessibilityRole="button" disabled={saving} onPress={handleSubmit} style={({ pressed }) => [styles.submitButton, pressed && styles.submitPressed, saving && styles.disabledButton]}>
           {saving ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.submitText}>Ekle</Text>}
         </Pressable>
       </View>

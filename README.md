@@ -28,3 +28,14 @@ npm run android
 npm run ios
 npm run web
 ```
+
+## Kalite Kontrolleri
+
+TypeScript ve Expo proje kontrollerini çalıştırmak için:
+
+```bash
+npx tsc --noEmit
+npx expo-doctor
+```
+
+Uygulama ilk açıldığında görevler cihazın yerel depolamasından yüklenir. Yükleme başarısız olursa haftanın günlerinde `Tekrar dene` seçeneği görünür. Uygulama silinirse yerel görev verileri de silinebilir.
