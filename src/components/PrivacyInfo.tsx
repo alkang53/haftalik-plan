@@ -23,7 +23,7 @@ export function PrivacyInfo({ firstUse = false, onClose }: Props) {
         </View>
 
         <ScrollView contentContainerStyle={styles.infoContent} showsVerticalScrollIndicator={false}>
-          {firstUse && <Text style={styles.infoLead}>Haftalık Plan, planlarını cihazında tutar ve verilerini uzak bir sunucuya göndermez.</Text>}
+          {firstUse && <Text style={styles.infoLead}>Plan Seven, planlarını cihazında tutar ve verilerini uzak bir sunucuya göndermez.</Text>}
           <Text style={styles.infoSectionTitle}>Verilerin nerede?</Text>
           <Text style={styles.infoText}>Görevlerin yalnızca bu cihazdaki yerel depolama alanında saklanır. Hesap açman veya bir sunucuya bağlanman gerekmez.</Text>
           <Text style={styles.infoSectionTitle}>Verileri silme</Text>

@@ -1,4 +1,4 @@
-# Haftalık Plan
+# Plan Seven
 
 Haftalık görevleri günlere göre planlamayı, görevlere saat ve etiket eklemeyi ve tamamlanma durumlarını takip etmeyi sağlayan sade bir mobil planlama uygulamasıdır. Kullanıcılar önceki ve sonraki haftalar arasında geçiş yapabilir, görevlerini yeniden sıralayabilir ve planlarını cihazlarında saklayabilir.
 
