@@ -33,6 +33,12 @@ yarn-error.*
 # local env files
 .env*.local
 
+# local assistant and project notes
+.claude/
+AGENTS.md
+CLAUDE.md
+DEVELOPMENT_PLAN.md
+
 # typescript
 *.tsbuildinfo
 
