@@ -140,7 +140,6 @@ export const styles = StyleSheet.create({
     paddingBottom: 26,
   },
   infoTitleBlock: { flex: 1 },
-  infoEyebrow: { color: '#E76F51', fontSize: 10, fontWeight: '800', letterSpacing: 1.5, marginTop: 5 },
   infoContent: { paddingBottom: 4 },
   infoLead: { color: '#34445A', fontSize: 16, lineHeight: 24, marginBottom: 6 },
   infoSectionTitle: { color: '#162235', fontSize: 15, fontWeight: '800', marginTop: 18 },

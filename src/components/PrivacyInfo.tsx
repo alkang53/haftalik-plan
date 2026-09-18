@@ -13,8 +13,7 @@ export function PrivacyInfo({ firstUse = false, onClose }: Props) {
       <View style={styles.infoCard}>
         <View style={styles.modalHeader}>
           <View style={styles.infoTitleBlock}>
-            <Text style={styles.modalTitle}>{firstUse ? 'Hoş geldin' : 'Gizlilik ve ayarlar'}</Text>
-            {firstUse && <Text style={styles.infoEyebrow}>LOCAL-FIRST</Text>}
+            <Text style={styles.modalTitle}>{firstUse ? 'Hoşgeldin' : 'Gizlilik ve ayarlar'}</Text>
           </View>
           {!firstUse && (
             <Pressable accessibilityLabel="Gizlilik ekranını kapat" accessibilityRole="button" onPress={onClose} style={styles.closeButton}>
