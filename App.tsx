@@ -1,14 +1,13 @@
 import { StatusBar } from 'expo-status-bar';
-import DateTimePicker, {
-  type DateTimePickerEvent,
-} from '@react-native-community/datetimepicker';
-import { useEffect, useState } from 'react';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { useEffect, useRef, useState } from 'react';
 import {
   SafeAreaProvider,
   SafeAreaView,
 } from 'react-native-safe-area-context';
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Modal,
   Pressable,
@@ -27,7 +26,9 @@ import {
 } from './src/utils/week';
 import {
   addTodo,
+  deleteTodo,
   loadTodos,
+  updateTodo,
 } from './src/storage/todoStorage';
 import {
   DEFAULT_TODO_TAG,
@@ -73,27 +74,39 @@ function formatTime(date: Date) {
   ).padStart(2, '0')}`;
 }
 
+function dateFromKey(dateKey: string) {
+  const [year, month, day] = dateKey.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function replaceTodo(todos: Todo[], nextTodo: Todo) {
+  return todos.map((todo) => (todo.id === nextTodo.id ? nextTodo : todo));
+}
+
 function TodoForm({
-  date,
   onClose,
   onCreated,
 }: {
-  date: string;
   onClose: () => void;
   onCreated: (todo: Todo) => void;
 }) {
   const [title, setTitle] = useState('');
+  const [date, setDate] = useState(toDateKey(new Date()));
   const [time, setTime] = useState<Date | null>(null);
   const [tag, setTag] = useState<TodoTag>(DEFAULT_TODO_TAG);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const handleTimeChange = (event: DateTimePickerEvent, selected?: Date) => {
+  const handleTimeChange = (_event: unknown, selected: Date) => {
     setShowTimePicker(false);
-    if (event.type === 'set' && selected) {
-      setTime(selected);
-    }
+    setTime(selected);
+  };
+
+  const handleDateChange = (_event: unknown, selected: Date) => {
+    setShowDatePicker(false);
+    setDate(toDateKey(selected));
   };
 
   const handleSubmit = async () => {
@@ -152,6 +165,25 @@ function TodoForm({
           value={title}
         />
 
+        <Text style={styles.fieldLabel}>Tarih</Text>
+        <Pressable
+          accessibilityLabel={`Tarih ${formatDate(dateFromKey(date))}`}
+          accessibilityRole="button"
+          disabled={saving}
+          onPress={() => setShowDatePicker(true)}
+          style={({ pressed }) => [styles.dateButton, pressed && styles.pressedButton]}
+        >
+          <Text style={styles.timeButtonText}>{formatDate(dateFromKey(date))}</Text>
+        </Pressable>
+        {showDatePicker && (
+          <DateTimePicker
+            mode="date"
+            onDismiss={() => setShowDatePicker(false)}
+            onValueChange={handleDateChange}
+            value={dateFromKey(date)}
+          />
+        )}
+
         <Text style={styles.fieldLabel}>Saat (isteğe bağlı)</Text>
         <View style={styles.timeRow}>
           <Pressable
@@ -171,7 +203,8 @@ function TodoForm({
         {showTimePicker && (
           <DateTimePicker
             mode="time"
-            onChange={handleTimeChange}
+            onDismiss={() => setShowTimePicker(false)}
+            onValueChange={handleTimeChange}
             value={time ?? new Date()}
           />
         )}
@@ -210,6 +243,193 @@ function TodoForm({
   );
 }
 
+function TodoEditor({
+  todo,
+  onClose,
+  onSaved,
+  onDeleted,
+}: {
+  todo: Todo;
+  onClose: () => void;
+  onSaved: (todo: Todo) => void;
+  onDeleted: (id: string) => void;
+}) {
+  const [title, setTitle] = useState(todo.title);
+  const [date, setDate] = useState(todo.date);
+  const [time, setTime] = useState<Date | null>(todo.time ? dateFromKey(todo.date) : null);
+  const [tag, setTag] = useState<TodoTag>(todo.tag);
+  const [picker, setPicker] = useState<'date' | 'time' | null>(null);
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (todo.time) {
+      const [hours, minutes] = todo.time.split(':').map(Number);
+      const nextTime = dateFromKey(todo.date);
+      nextTime.setHours(hours, minutes, 0, 0);
+      setTime(nextTime);
+    }
+  }, [todo.date, todo.time]);
+
+  const handlePickerChange = (_event: unknown, selected: Date) => {
+    const pickerType = picker;
+    setPicker(null);
+
+    if (pickerType === 'date') {
+      setDate(toDateKey(selected));
+    } else {
+      setTime(selected);
+    }
+  };
+
+  const handleSubmit = async () => {
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) {
+      setError('Görev başlığı gerekli.');
+      return;
+    }
+
+    setSaving(true);
+    setError('');
+    try {
+      const updatedTodo = await updateTodo(todo.id, {
+        date,
+        title: trimmedTitle,
+        time: time ? formatTime(time) : null,
+        tag,
+      });
+      if (updatedTodo) {
+        onSaved(updatedTodo);
+      }
+    } catch {
+      setError('Görev güncellenemedi. Lütfen tekrar dene.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const confirmDelete = () => {
+    Alert.alert('Görevi silmek istediğinize emin misiniz?', undefined, [
+      { text: 'Vazgeç', style: 'cancel' },
+      {
+        text: 'Sil',
+        style: 'destructive',
+        onPress: async () => {
+          setSaving(true);
+          try {
+            await deleteTodo(todo.id);
+            onDeleted(todo.id);
+          } catch {
+            setError('Görev silinemedi. Lütfen tekrar dene.');
+            setSaving(false);
+          }
+        },
+      },
+    ]);
+  };
+
+  return (
+    <KeyboardAvoidingView behavior="padding" style={styles.modalRoot}>
+      <View style={styles.modalCard}>
+        <View style={styles.modalHeader}>
+          <View>
+            <Text style={styles.modalTitle}>Görevi Düzenle</Text>
+          </View>
+          <Pressable
+            accessibilityLabel="Görev düzenleme penceresini kapat"
+            accessibilityRole="button"
+            disabled={saving}
+            onPress={onClose}
+            style={styles.closeButton}
+          >
+            <Text style={styles.closeText}>×</Text>
+          </Pressable>
+        </View>
+
+        <Text style={styles.fieldLabel}>Başlık</Text>
+        <TextInput
+          editable={!saving}
+          maxLength={120}
+          onChangeText={setTitle}
+          placeholder="Ne yapman gerekiyor?"
+          placeholderTextColor="#8A929D"
+          style={styles.titleInput}
+          value={title}
+        />
+
+        <Text style={styles.fieldLabel}>Tarih</Text>
+        <Pressable
+          accessibilityLabel={`Tarih ${formatDate(dateFromKey(date))}`}
+          accessibilityRole="button"
+          disabled={saving}
+          onPress={() => setPicker('date')}
+          style={({ pressed }) => [styles.dateButton, pressed && styles.pressedButton]}
+        >
+          <Text style={styles.timeButtonText}>{formatDate(dateFromKey(date))}</Text>
+        </Pressable>
+
+        <Text style={styles.fieldLabel}>Saat (isteğe bağlı)</Text>
+        <View style={styles.timeRow}>
+          <Pressable
+            accessibilityLabel={time ? `Saat ${formatTime(time)}` : 'Saat seç'}
+            accessibilityRole="button"
+            disabled={saving}
+            onPress={() => setPicker('time')}
+            style={({ pressed }) => [styles.timeButton, pressed && styles.pressedButton]}
+          >
+            <Text style={styles.timeButtonText}>{time ? formatTime(time) : 'Saat seç'}</Text>
+          </Pressable>
+          {time && (
+            <Pressable disabled={saving} onPress={() => setTime(null)} style={styles.clearTimeButton}>
+              <Text style={styles.clearTimeText}>Temizle</Text>
+            </Pressable>
+          )}
+        </View>
+        {picker && (
+          <DateTimePicker
+            mode={picker}
+            onDismiss={() => setPicker(null)}
+            onValueChange={handlePickerChange}
+            value={picker === 'date' ? dateFromKey(date) : time ?? new Date()}
+          />
+        )}
+
+        <Text style={styles.fieldLabel}>Etiket</Text>
+        <View style={styles.tagList}>
+          {TODO_TAGS.map((item) => (
+            <Pressable
+              accessibilityRole="radio"
+              accessibilityState={{ selected: tag === item }}
+              disabled={saving}
+              key={item}
+              onPress={() => setTag(item)}
+              style={[styles.tagButton, tag === item && styles.selectedTagButton]}
+            >
+              <Text style={[styles.tagIcon, tag === item && styles.selectedTagText]}>{TODO_TAG_ICONS[item]}</Text>
+              <Text style={[styles.tagText, tag === item && styles.selectedTagText]}>{TODO_TAG_LABELS[item]}</Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {!!error && <Text style={styles.errorText}>{error}</Text>}
+        <View style={styles.editorActions}>
+          <Pressable accessibilityRole="button" disabled={saving} onPress={confirmDelete} style={styles.deleteButton}>
+            <Text style={styles.deleteText}>Sil</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            disabled={saving}
+            onPress={handleSubmit}
+            style={({ pressed }) => [styles.submitButton, styles.saveButton, pressed && styles.submitPressed, saving && styles.disabledButton]}
+          >
+            {saving ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.submitText}>Kaydet</Text>}
+          </Pressable>
+        </View>
+      </View>
+    </KeyboardAvoidingView>
+  );
+}
+
 function WeeklyPlanScreen() {
   const currentWeek = getWeek();
   const [selectedMonday, setSelectedMonday] = useState(currentWeek.monday);
@@ -219,9 +439,20 @@ function WeeklyPlanScreen() {
   const todayKey = toDateKey(new Date());
   const [todos, setTodos] = useState<Todo[]>([]);
   const [todoDate, setTodoDate] = useState<string | null>(null);
+  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const [loading, setLoading] = useState(true);
+  const dayScrollRef = useRef<ScrollView | null>(null);
+  const todayOffset = useRef<number | null>(null);
+  const todayHeight = useRef(0);
+  const todayHeadingHeight = useRef(0);
+  const dayScrollHeight = useRef(0);
+  const isCurrentWeek = toDateKey(selectedMonday) === toDateKey(currentWeek.monday);
   const isEarliestWeek =
     toDateKey(selectedMonday) === toDateKey(addWeeks(currentWeek.monday, -1));
+
+  useEffect(() => {
+    setSelectedMonday(getWeek().monday);
+  }, []);
 
   useEffect(() => {
     loadTodos()
@@ -234,9 +465,67 @@ function WeeklyPlanScreen() {
       .filter((todo) => todo.date === date)
       .sort((first, second) => first.order - second.order);
 
+  const toggleTodo = async (todo: Todo) => {
+    try {
+      const updatedTodo = await updateTodo(todo.id, { completed: !todo.completed });
+      if (updatedTodo) {
+        setTodos((current) => replaceTodo(current, updatedTodo));
+      }
+    } catch {
+      Alert.alert('Güncelleme başarısız', 'Görevin durumu değiştirilemedi.');
+    }
+  };
+
+  const getTodayScrollOffset = () =>
+    Math.max(
+      0,
+      (todayOffset.current ?? 0) +
+        (todayHeadingHeight.current || todayHeight.current) / 2 -
+        dayScrollHeight.current / 2,
+    );
+
+  const scrollToToday = () => {
+    if (loading || todayOffset.current === null || dayScrollHeight.current === 0) {
+      return;
+    }
+
+    dayScrollRef.current?.scrollTo({
+      animated: false,
+      y: getTodayScrollOffset(),
+    });
+  };
+
+  const goToCurrentWeek = () => {
+    setSelectedMonday(currentWeek.monday);
+  };
+
+  useEffect(() => {
+    let secondFrame: number | null = null;
+    const firstFrame = requestAnimationFrame(() => {
+      secondFrame = requestAnimationFrame(() => {
+        if (loading) {
+          return;
+        }
+
+        if (isCurrentWeek) {
+          scrollToToday();
+        } else {
+          dayScrollRef.current?.scrollTo({ animated: false, y: 0 });
+        }
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(firstFrame);
+      if (secondFrame !== null) {
+        cancelAnimationFrame(secondFrame);
+      }
+    };
+  }, [isCurrentWeek, loading, selectedMonday]);
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.planContent}>
+      <View style={styles.planContent}>
         <View style={styles.planTopBar}>
           <Text style={styles.topBarLabel}>SEVEN</Text>
         </View>
@@ -262,7 +551,7 @@ function WeeklyPlanScreen() {
             <Pressable
               accessibilityLabel="Bugüne dön"
               accessibilityRole="button"
-              onPress={() => setSelectedMonday(currentWeek.monday)}
+              onPress={goToCurrentWeek}
               style={({ pressed }) => [styles.titleButton, pressed && styles.pressedButton]}
             >
               <Text style={styles.navigationLabel}>Bugün</Text>
@@ -277,7 +566,16 @@ function WeeklyPlanScreen() {
             </Pressable>
           </View>
         </View>
+      </View>
 
+      <ScrollView
+        ref={dayScrollRef}
+        style={styles.dayScroll}
+        contentContainerStyle={styles.dayScrollContent}
+        onLayout={(event) => {
+          dayScrollHeight.current = event.nativeEvent.layout.height;
+        }}
+      >
         <View style={styles.weekList}>
           {week.map((date, index) => {
             const dateKey = toDateKey(date);
@@ -285,25 +583,53 @@ function WeeklyPlanScreen() {
             return (
             <View
               key={dateKey}
+              onLayout={(event) => {
+                if (dateKey === todayKey) {
+                  todayOffset.current = event.nativeEvent.layout.y;
+                  todayHeight.current = event.nativeEvent.layout.height;
+                }
+              }}
               style={[styles.dayCard, dateKey === todayKey && styles.todayCard]}
             >
-              <View style={styles.dayHeading}>
+              <View
+                onLayout={(event) => {
+                  if (dateKey === todayKey) {
+                    todayHeadingHeight.current = event.nativeEvent.layout.height;
+                  }
+                }}
+                style={styles.dayHeading}
+              >
                 <Text style={styles.dayName}>{dayNames[date.getDay()]}</Text>
                 <Text style={styles.dayDate}>{formatDate(date)}</Text>
               </View>
               {loading ? <ActivityIndicator color="#E76F51" style={styles.dayLoader} /> : dayTodos.length > 0 ? (
                 <View style={styles.todoList}>
                   {dayTodos.map((todo) => (
-                    <View key={todo.id} style={styles.todoRow}>
-                      <Text
-                        accessibilityLabel={`${TODO_TAG_LABELS[todo.tag]} etiketi`}
-                        style={styles.todoTagIcon}
+                    <Pressable
+                      key={todo.id}
+                      accessibilityLabel={`${todo.title} görevini düzenle`}
+                      accessibilityRole="button"
+                      onPress={() => setEditingTodo(todo)}
+                      style={({ pressed }) => [styles.todoRow, todo.completed && styles.completedTodoRow, pressed && styles.pressedTodoRow]}
+                    >
+                      <Pressable
+                        accessibilityLabel={todo.completed ? `${todo.title} tamamlanmadı olarak işaretle` : `${todo.title} tamamlandı olarak işaretle`}
+                        accessibilityRole="checkbox"
+                        accessibilityState={{ checked: todo.completed }}
+                        onPress={(event) => {
+                          event.stopPropagation();
+                          toggleTodo(todo);
+                        }}
+                        style={styles.todoToggle}
                       >
-                        {TODO_TAG_ICONS[todo.tag]}
-                      </Text>
-                      {todo.time && <Text style={styles.todoTime}>{todo.time}</Text>}
-                      <Text style={styles.todoTitle}>{todo.title}</Text>
-                    </View>
+                        <View style={[styles.checkbox, todo.completed && styles.checkedBox]}>
+                          {todo.completed && <Text style={styles.checkmark}>✓</Text>}
+                        </View>
+                        <Text style={styles.todoTagIcon}>{TODO_TAG_ICONS[todo.tag]}</Text>
+                      </Pressable>
+                      {todo.time && <Text style={[styles.todoTime, todo.completed && styles.completedText]}>{todo.time}</Text>}
+                      <Text style={[styles.todoTitle, todo.completed && styles.completedText]}>{todo.title}</Text>
+                    </Pressable>
                   ))}
                 </View>
               ) : (
@@ -327,12 +653,27 @@ function WeeklyPlanScreen() {
       </ScrollView>
       <Modal animationType="slide" onRequestClose={() => setTodoDate(null)} transparent visible={todoDate !== null}>
         {todoDate && (
-          <TodoForm
-            date={todoDate}
+           <TodoForm
             onClose={() => setTodoDate(null)}
             onCreated={(todo) => {
               setTodos((current) => [...current, todo]);
               setTodoDate(null);
+            }}
+          />
+        )}
+      </Modal>
+      <Modal animationType="slide" onRequestClose={() => setEditingTodo(null)} transparent visible={editingTodo !== null}>
+        {editingTodo && (
+          <TodoEditor
+            todo={editingTodo}
+            onClose={() => setEditingTodo(null)}
+            onDeleted={(id) => {
+              setTodos((current) => current.filter((todo) => todo.id !== id));
+              setEditingTodo(null);
+            }}
+            onSaved={(todo) => {
+              setTodos((current) => replaceTodo(current, todo));
+              setEditingTodo(null);
             }}
           />
         )}
@@ -357,7 +698,13 @@ const styles = StyleSheet.create({
   },
   planContent: {
     padding: 14,
+  },
+  dayScroll: {
+    flex: 1,
+  },
+  dayScrollContent: {
     paddingBottom: 24,
+    paddingHorizontal: 14,
   },
   planTopBar: {
     alignItems: 'center',
@@ -504,6 +851,39 @@ const styles = StyleSheet.create({
     paddingHorizontal: 9,
     paddingVertical: 7,
   },
+  pressedTodoRow: {
+    opacity: 0.78,
+  },
+  todoToggle: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 7,
+  },
+  completedTodoRow: {
+    backgroundColor: '#E8E6E1',
+  },
+  checkbox: {
+    alignItems: 'center',
+    borderColor: '#A9B0B8',
+    borderRadius: 9,
+    borderWidth: 1.5,
+    height: 22,
+    justifyContent: 'center',
+    width: 22,
+  },
+  checkedBox: {
+    backgroundColor: '#526174',
+    borderColor: '#526174',
+  },
+  checkmark: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  completedText: {
+    color: '#8A929D',
+    textDecorationLine: 'line-through',
+  },
   todoTime: {
     color: '#526174',
     fontSize: 12,
@@ -594,6 +974,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
+  dateButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#F3F0EA',
+    borderColor: '#D9D5CE',
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
   timeButtonText: {
     color: '#B94F38',
     fontSize: 14,
@@ -658,5 +1047,29 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '800',
+  },
+  editorActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 22,
+  },
+  deleteButton: {
+    alignItems: 'center',
+    borderColor: '#E2B8B0',
+    borderRadius: 14,
+    borderWidth: 1,
+    justifyContent: 'center',
+    minHeight: 52,
+    paddingHorizontal: 18,
+  },
+  deleteText: {
+    color: '#B04C4C',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  saveButton: {
+    flex: 1,
+    marginTop: 0,
   },
 });
