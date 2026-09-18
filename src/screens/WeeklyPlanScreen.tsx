@@ -219,7 +219,7 @@ export function WeeklyPlanScreen() {
         <View style={styles.planTopBar}>
           <Text style={styles.topBarLabel}>SEVEN</Text>
           <Pressable accessibilityLabel="Gizlilik ve ayarları aç" accessibilityRole="button" onPress={() => setShowPrivacyInfo(true)} style={({ pressed }) => [styles.settingsButton, pressed && styles.pressedButton]}>
-            <Text style={styles.settingsText}>Ayarlar</Text>
+            <Text style={styles.settingsIcon}>⚙</Text>
           </Pressable>
         </View>
         <View style={styles.planHeader}>

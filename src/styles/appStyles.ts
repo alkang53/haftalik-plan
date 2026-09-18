@@ -7,8 +7,8 @@ export const styles = StyleSheet.create({
   dayScrollContent: { paddingBottom: 24, paddingHorizontal: 14 },
   planTopBar: { alignItems: 'center', flexDirection: 'row', height: 36, justifyContent: 'space-between' },
   topBarLabel: { color: '#E76F51', fontSize: 11, fontWeight: '700', letterSpacing: 1.7 },
-  settingsButton: { borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7 },
-  settingsText: { color: '#526174', fontSize: 12, fontWeight: '700' },
+  settingsButton: { alignItems: 'center', borderRadius: 10, height: 38, justifyContent: 'center', width: 38 },
+  settingsIcon: { color: '#526174', fontSize: 22, lineHeight: 25 },
   planHeader: {
     alignItems: 'center',
     flexDirection: 'row',
