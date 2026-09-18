@@ -8,7 +8,7 @@ export const styles = StyleSheet.create({
   planTopBar: { alignItems: 'center', flexDirection: 'row', height: 36, justifyContent: 'space-between' },
   topBarLabel: { color: '#E76F51', fontSize: 11, fontWeight: '700', letterSpacing: 1.7 },
   settingsButton: { alignItems: 'center', borderRadius: 10, height: 38, justifyContent: 'center', width: 38 },
-  settingsIcon: { color: '#526174', fontSize: 22, lineHeight: 25 },
+  settingsIcon: { color: '#526174', fontSize: 21, fontWeight: '300', lineHeight: 24 },
   planHeader: {
     alignItems: 'center',
     flexDirection: 'row',
