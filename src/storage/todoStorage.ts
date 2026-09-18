@@ -37,15 +37,16 @@ const isTodo = (value: unknown): value is Todo => {
 };
 
 const readTodos = async (): Promise<Todo[]> => {
-  try {
-    const serializedTodos = await AsyncStorage.getItem(TODOS_STORAGE_KEY);
-    if (!serializedTodos) {
-      return [];
-    }
+  const serializedTodos = await AsyncStorage.getItem(TODOS_STORAGE_KEY);
+  if (!serializedTodos) {
+    return [];
+  }
 
+  try {
     const parsedTodos: unknown = JSON.parse(serializedTodos);
     return Array.isArray(parsedTodos) ? parsedTodos.filter(isTodo) : [];
   } catch {
+    // Bozuk yerel veri uygulamayi durdurmak yerine bos listeye doner.
     return [];
   }
 };

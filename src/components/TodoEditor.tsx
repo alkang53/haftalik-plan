@@ -100,7 +100,7 @@ export function TodoEditor({ todo, onClose, onSaved, onDeleted }: Props) {
           <Pressable accessibilityLabel={time ? `Saat ${formatTime(time)}` : 'Saat seç'} accessibilityRole="button" disabled={saving} onPress={() => setPicker('time')} style={({ pressed }) => [styles.timeButton, pressed && styles.pressedButton]}>
             <Text style={styles.timeButtonText}>{time ? formatTime(time) : 'Saat seç'}</Text>
           </Pressable>
-          {time && <Pressable disabled={saving} onPress={() => setTime(null)} style={styles.clearTimeButton}><Text style={styles.clearTimeText}>Temizle</Text></Pressable>}
+           {time && <Pressable accessibilityLabel="Seçilen saati temizle" accessibilityRole="button" disabled={saving} onPress={() => setTime(null)} style={styles.clearTimeButton}><Text style={styles.clearTimeText}>Temizle</Text></Pressable>}
         </View>
         {picker && (
           <DateTimePicker
@@ -109,8 +109,9 @@ export function TodoEditor({ todo, onClose, onSaved, onDeleted }: Props) {
             onValueChange={(_event, selected) => {
               const pickerType = picker;
               setPicker(null);
-              if (pickerType === 'date') setDate(toDateKey(selected));
-              else setTime(selected);
+               if (!selected) return;
+               if (pickerType === 'date') setDate(toDateKey(selected));
+               else setTime(selected);
             }}
             value={picker === 'date' ? dateFromKey(date) : time ?? new Date()}
           />
@@ -119,7 +120,7 @@ export function TodoEditor({ todo, onClose, onSaved, onDeleted }: Props) {
         <Text style={styles.fieldLabel}>Etiket</Text>
         <View style={styles.tagList}>
           {TODO_TAGS.map((item) => (
-            <Pressable accessibilityRole="radio" accessibilityState={{ selected: tag === item }} disabled={saving} key={item} onPress={() => setTag(item)} style={[styles.tagButton, tag === item && styles.selectedTagButton]}>
+             <Pressable accessibilityLabel={`${TODO_TAG_LABELS[item]} etiketini seç`} accessibilityRole="radio" accessibilityState={{ selected: tag === item }} disabled={saving} key={item} onPress={() => setTag(item)} style={[styles.tagButton, tag === item && styles.selectedTagButton]}>
               <Text style={[styles.tagIcon, tag === item && styles.selectedTagText]}>{TODO_TAG_ICONS[item]}</Text>
               <Text style={[styles.tagText, tag === item && styles.selectedTagText]}>{TODO_TAG_LABELS[item]}</Text>
             </Pressable>
@@ -128,8 +129,8 @@ export function TodoEditor({ todo, onClose, onSaved, onDeleted }: Props) {
 
         {!!error && <Text style={styles.errorText}>{error}</Text>}
         <View style={styles.editorActions}>
-          <Pressable accessibilityRole="button" disabled={saving} onPress={confirmDelete} style={styles.deleteButton}><Text style={styles.deleteText}>Sil</Text></Pressable>
-          <Pressable accessibilityRole="button" disabled={saving} onPress={handleSubmit} style={({ pressed }) => [styles.submitButton, styles.saveButton, pressed && styles.submitPressed, saving && styles.disabledButton]}>
+           <Pressable accessibilityLabel="Görevi sil" accessibilityRole="button" disabled={saving} onPress={confirmDelete} style={styles.deleteButton}><Text style={styles.deleteText}>Sil</Text></Pressable>
+           <Pressable accessibilityLabel="Görev değişikliklerini kaydet" accessibilityRole="button" disabled={saving} onPress={handleSubmit} style={({ pressed }) => [styles.submitButton, styles.saveButton, pressed && styles.submitPressed, saving && styles.disabledButton]}>
             {saving ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.submitText}>Kaydet</Text>}
           </Pressable>
         </View>

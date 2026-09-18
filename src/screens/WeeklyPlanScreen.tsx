@@ -35,6 +35,7 @@ export function WeeklyPlanScreen() {
   const [showPrivacyInfo, setShowPrivacyInfo] = useState(false);
   const [showFirstUseNotice, setShowFirstUseNotice] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const dayScrollRef = useRef<ScrollView | null>(null);
   const scrollWindowRef = useRef<View | null>(null);
   const dayLayouts = useRef<Record<string, Layout>>({});
@@ -57,8 +58,17 @@ export function WeeklyPlanScreen() {
     setSelectedMonday(getWeek().monday);
   }, []);
 
+  const refreshTodos = () => {
+    setLoading(true);
+    setLoadError(false);
+    loadTodos()
+      .then(setTodos)
+      .catch(() => setLoadError(true))
+      .finally(() => setLoading(false));
+  };
+
   useEffect(() => {
-    loadTodos().then(setTodos).finally(() => setLoading(false));
+    refreshTodos();
   }, []);
 
   useEffect(() => {
@@ -270,7 +280,14 @@ export function WeeklyPlanScreen() {
                     <Text style={styles.dayName}>{dayNames[date.getDay()]}</Text>
                     <Text style={styles.dayDate}>{formatDate(date)}</Text>
                   </View>
-                  {loading ? <ActivityIndicator color="#E76F51" style={styles.dayLoader} /> : dayTodos.length > 0 ? (
+                  {loading ? <ActivityIndicator accessibilityLabel="Görevler yükleniyor" color="#E76F51" style={styles.dayLoader} /> : loadError ? (
+                     <View style={styles.errorState}>
+                       <Text style={styles.errorStateText}>Görevler yüklenemedi.</Text>
+                       <Pressable accessibilityLabel="Görevleri yeniden yükle" accessibilityRole="button" onPress={refreshTodos} style={({ pressed }) => [styles.retryButton, pressed && styles.pressedButton]}>
+                         <Text style={styles.retryButtonText}>Tekrar dene</Text>
+                       </Pressable>
+                     </View>
+                   ) : dayTodos.length > 0 ? (
                     <View onLayout={(event) => { todoListLayouts.current[dateKey] = { y: event.nativeEvent.layout.y }; updateTodoPositions(dateKey); }} style={styles.todoList}>
                       {dayTodos.map((todo) => (
                         <DraggableTodoRow
@@ -307,7 +324,7 @@ export function WeeklyPlanScreen() {
                       ) : <Text style={styles.emptyDayText}>Henüz görev yok</Text>}
                     </View>
                   )}
-                  <Pressable accessibilityLabel={`${dayNames[date.getDay()]} gününe görev ekle`} accessibilityRole="button" onPress={() => setTodoDate(dateKey)} style={({ pressed }) => [styles.addTodoButton, pressed && styles.pressedButton]}>
+                  <Pressable accessibilityLabel={`${dayNames[date.getDay()]} gününe görev ekle`} accessibilityRole="button" hitSlop={11} onPress={() => setTodoDate(dateKey)} style={({ pressed }) => [styles.addTodoButton, pressed && styles.pressedButton]}>
                     <Text style={styles.addTodoIcon}>+</Text>
                   </Pressable>
                 </View>
