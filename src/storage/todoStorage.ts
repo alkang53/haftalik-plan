@@ -31,7 +31,8 @@ const isTodo = (value: unknown): value is Todo => {
     isTodoTag(todo.tag) &&
     typeof todo.completed === 'boolean' &&
     typeof todo.order === 'number' &&
-    Number.isFinite(todo.order)
+    Number.isFinite(todo.order) &&
+    (todo.manualOrder === undefined || typeof todo.manualOrder === 'boolean')
   );
 };
 
@@ -56,12 +57,22 @@ const writeTodos = async (todos: Todo[]) => {
 const createTodoId = () =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 
+const sortDayTodos = (todos: Todo[]) => {
+  const hasManualOrder = todos.some((todo) => todo.manualOrder);
+  return [...todos].sort((first, second) => {
+    if (hasManualOrder) return first.order - second.order;
+    if (first.time === null) return 1;
+    if (second.time === null) return -1;
+    return first.time.localeCompare(second.time) || first.order - second.order;
+  });
+};
+
 export const loadTodos = readTodos;
 
 export const addTodo = async (input: NewTodo): Promise<Todo> => {
   const title = input.title.trim();
   if (!title) {
-    throw new Error('Todo basligi bos olamaz.');
+    throw new Error('Görev basligi bos olamaz.');
   }
 
   const todos = await readTodos();
@@ -93,7 +104,7 @@ export const updateTodo = async (
   };
 
   if (!isTodo(nextTodo)) {
-    throw new Error('Gecersiz todo verisi.');
+    throw new Error('Geçersiz görev verisi.');
   }
 
   const updatedTodos = [...todos];
@@ -113,14 +124,53 @@ export const reorderTodos = async (orderedIds: string[]): Promise<Todo[]> => {
   const knownIds = new Set(todos.map(({ id }) => id));
 
   if (idSet.size !== orderedIds.length || orderedIds.some((id) => !knownIds.has(id))) {
-    throw new Error('Gecersiz todo siralamasi.');
+    throw new Error('Geçersiz görev siralaması.');
   }
 
   const orderById = new Map(orderedIds.map((id, index) => [id, index]));
   const reorderedTodos = todos.map((todo) =>
-    orderById.has(todo.id) ? { ...todo, order: orderById.get(todo.id)! } : todo,
+    orderById.has(todo.id)
+      ? { ...todo, order: orderById.get(todo.id)!, manualOrder: true }
+      : todo,
   );
 
   await writeTodos(reorderedTodos);
   return reorderedTodos;
+};
+
+export const moveTodo = async (
+  id: string,
+  date: string,
+  targetIndex: number,
+): Promise<Todo | null> => {
+  const todos = await readTodos();
+  const source = todos.find((todo) => todo.id === id);
+  if (!source) {
+    return null;
+  }
+
+  const remaining = todos.filter((todo) => todo.id !== id);
+  const destination = sortDayTodos(remaining.filter((todo) => todo.date === date));
+  const index = Math.max(0, Math.min(targetIndex, destination.length));
+  const moved = { ...source, date, order: index, manualOrder: true };
+  destination.splice(index, 0, moved);
+
+  const affectedDates = new Set([source.date, date]);
+  const nextTodos = remaining.map((todo) => {
+    if (!affectedDates.has(todo.date)) {
+      return todo;
+    }
+
+    const dayTodos =
+      todo.date === date
+        ? destination
+        : sortDayTodos(remaining.filter((item) => item.date === todo.date));
+    const nextIndex = dayTodos.findIndex((item) => item.id === todo.id);
+    return nextIndex === -1 ? todo : { ...todo, order: nextIndex, manualOrder: true };
+  });
+
+  nextTodos.push(moved);
+  const movedTodo = nextTodos.find((todo) => todo.id === id) ?? null;
+  await writeTodos(nextTodos);
+  return movedTodo;
 };
