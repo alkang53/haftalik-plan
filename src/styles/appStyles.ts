@@ -2,7 +2,7 @@ import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#F3F0EA' },
-  planContent: { padding: 14 },
+  planContent: { padding: 14, paddingTop: 28 },
   dayScroll: { flex: 1 },
   dayScrollContent: { paddingBottom: 24, paddingHorizontal: 14 },
   planTopBar: { alignItems: 'center', flexDirection: 'row', height: 36, justifyContent: 'space-between' },
