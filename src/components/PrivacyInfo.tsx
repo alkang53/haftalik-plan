@@ -28,7 +28,7 @@ export function PrivacyInfo({ firstUse = false, onClose }: Props) {
           <Text style={styles.infoSectionTitle}>Verilerin nerede?</Text>
           <Text style={styles.infoText}>Görevlerin yalnızca bu cihazdaki yerel depolama alanında saklanır. Hesap açman veya bir sunucuya bağlanman gerekmez.</Text>
           <Text style={styles.infoSectionTitle}>Verileri silme</Text>
-          <Text style={styles.infoText}>Görevleri uygulama içindeki silme işlemiyle tek tek kaldırabilirsin. Uygulamayı cihazından silersen, bu cihazda tutulan yerel veriler de kaybolabilir.</Text>
+          <Text style={styles.infoText}>Görevleri uygulama içindeki silme işlemiyle tek tek kaldırabilirsin. Uygulamayı cihazından sildiğinde, yalnızca bu cihazda tutulan yerel görev verileri de silinir.</Text>
           <Text style={styles.infoSectionTitle}>Gelecekteki senkronizasyon</Text>
           <Text style={styles.infoText}>Takvim veya başka bir hizmetle senkronizasyon şu anda etkin değildir. İleride eklenirse yalnızca senin açık iznin ve bağlantınla çalışacaktır.</Text>
         </ScrollView>
